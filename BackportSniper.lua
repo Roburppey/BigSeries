@@ -278,8 +278,6 @@ end
 
 function Sniper.OnTeleport(obj, name, duration_secs, status)
 
-    print(Game.GetLatency())
-
     if obj.IsAlly then return end
     if status == "Interrupted" then ultTime = 0 end
     local distance = Player:EdgeDistance(obj.Position)
