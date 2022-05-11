@@ -9,7 +9,7 @@ module("BJinx", package.seeall, log.setup)
 clean.module("BJinx", package.seeall, log.setup)
 
 -- Globals
-local debugging = true
+local debugging = false
 local CoreEx = _G.CoreEx
 local Libs = _G.Libs
 local os_clock = _G.os.clock
