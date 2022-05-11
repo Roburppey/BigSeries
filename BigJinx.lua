@@ -9,6 +9,7 @@ module("BJinx", package.seeall, log.setup)
 clean.module("BJinx", package.seeall, log.setup)
 
 -- Globals
+local debugging = true
 local CoreEx = _G.CoreEx
 local Libs = _G.Libs
 local os_clock = _G.os.clock
@@ -41,15 +42,16 @@ local HitChanceStrings = { "Collision", "OutOfRange", "VeryLow", "Low", "Medium"
 local ComboModeStrings = { "[Q] -> [E] -> [W]", "[E] -> [Q] -> [W]", "[E] -> [W] -> [Q]" }
 local Player = ObjectManager.Player.AsHero
 local isFishBones = not Player:GetBuff("JinxQ")
-local ScriptVersion = "1.3.4"
+local ScriptVersion = "1.3.5"
 local middle = Vector(7500, 53, 7362)
-local ScriptLastUpdate = "April 10. 2022"
+local ScriptLastUpdate = "May 11. 2022"
 
 CoreEx.AutoUpdate("https://raw.githubusercontent.com/Roburppey/BigSeries/main/BigJinx.lua", ScriptVersion)
 
 -- Globals
 local Jinx = {}
 local Utils = {}
+local Enemies = {}
 
 Jinx.TargetSelector = nil
 Jinx.Logic = {}
@@ -114,11 +116,16 @@ function GetRDmg(enemy, distance, health)
     return DamageLib.CalculatePhysicalDamage(Player, enemy, dmg)
 end
 
-function CanKill(enemy)
+function CanKill(enemy, extraHP, buffer)
     local distanceToHit = Player:Distance(enemy.Position)
     local timeToHit = Jinx.R.Delay + distanceToHit / Jinx.R.Speed
     local healthPredicted = { HealthPrediction.GetKillstealHealth(enemy, timeToHit) }
     local dmg = GetRDmg(enemy, distanceToHit, healthPredicted[1])
+
+    if extraHP then
+        return (healthPredicted[1] > 0) and (dmg > healthPredicted[1] + extraHP)
+    end
+
     return (healthPredicted[1] > 0) and (dmg > healthPredicted[1])
 end
 
@@ -332,11 +339,48 @@ function Jinx.OnExtremePriority(lagFree)
 
     if Menu.Get("RKS") then
         local enemies = ObjectManager.Get("enemy", "heroes")
-
+        if MGet("RIsEnemyCloseSafetyCheck") then
+            for index, value in ipairs(ObjectManager.GetNearby("enemy", "heroes")) do
+                if Player:Distance(value) < 600 then
+                    return
+                end
+            end
+        end
         -- RKS
         for i, v in pairs(enemies) do
             if Menu.Get("R" .. v.CharName) then
                 Jinx.Logic.R(v)
+            end
+        end
+    end
+end
+
+---@param obj AIHeroClient
+function Jinx.OnVisionLost(obj)
+    if obj.IsHero then
+        for key, hero in pairs(Enemies) do
+            if obj.CharName == hero.char then
+                Enemies[key].hpregen = obj.HealthRegen
+                Enemies[key].lastSeenTime = Game.GetTime()
+            end
+        end
+    end
+
+    if debugging then
+        INFO("Enemy HP OnVisionLost = " .. obj.Health)
+    end
+end
+
+---@param obj AIHeroClient
+function Jinx.OnVisionGain(obj)
+    if obj.IsHero then
+        for key, hero in pairs(Enemies) do
+            if obj.CharName == hero.char then
+                Enemies[key].hpregen = obj.HealthRegen
+
+                if debugging then
+                    INFO("Enemy HP OnVisionGain = " .. obj.Health)
+                end
             end
         end
     end
@@ -347,14 +391,22 @@ end
 
 ---@param Target GameObject
 function Jinx.OnPostAttack(Target)
+
     if Target.IsMinion or Target.IsTurret or Target.IsNexus or Target.IsInhibitor then
         return
     end
 
+    if not Jinx.Q:IsReady() then return false end
+
+    if Player:Distance(Target.Position) <= Player.BoundingRadius + 525 then
+        if Player:GetBuff("JinxQ") then
+            Input.Cast(SpellSlots.Q)
+        end
+    end
 
 
     -- This switches from Rocketlauncher to Minigun if the enemy is close enough
-    if Player:Distance(Target) <= Player.BoundingRadius + 525 then
+    if Player:Distance(Target.Position) <= Player.BoundingRadius + 525 then
         if MGet("QFinisher") then
             if (MGet("QFinisherSlider") / 100) * Target.MaxHealth < Target.Health then
                 if Player:GetBuff("JinxQ") then
@@ -371,7 +423,7 @@ function Jinx.OnPostAttack(Target)
 
     -- This switches from Minigun to Rocketlauncher if enemy has less than 10% of health
     if MGet("QFinisher") then
-        if Player:Distance(Target) <= Player.BoundingRadius + Target.BoundingRadius + 525 then
+        if Player:Distance(Target.Position) <= Player.BoundingRadius + Target.BoundingRadius + 525 then
             if Target.Health <= Target.MaxHealth * (MGet("QFinisherSlider") / 100) then
                 if not Player:GetBuff("JinxQ") then
                     Input.Cast(SpellSlots.Q)
@@ -382,7 +434,16 @@ function Jinx.OnPostAttack(Target)
 
 end
 
-function Jinx.OnPreAttack(Target)
+--args: {Process, Target}
+function Jinx.OnPreAttack(args)
+
+    if not Jinx.Q:IsReady() then return false end
+    if Player.IsWindingUp then return false end
+    if not Player:GetBuff("JinxQ") then return false end
+
+    if Player:Distance(args.Target.Position) <= 525 then
+        Input.Cast(SpellSlots.Q)
+    end
 
 end
 
@@ -519,6 +580,14 @@ function Jinx.Logic.R(Target)
         return
     end
 
+    if MGet("RIsEnemyCloseSafetyCheck") then
+        for index, value in ipairs(ObjectManager.GetNearby("enemy", "heroes")) do
+            if Player:Distance(value) < 600 then
+                return
+            end
+        end
+    end
+
     if Jinx.R:IsReady() then
         if Menu.Get("RMateCheck") then
             for i, v in pairs(ObjectManager.Get("ally", "heroes")) do
@@ -640,6 +709,8 @@ function Jinx.Logic.Auto(lag)
 
 
 
+
+
     local enemies = ObjectManager.Get("enemy", "heroes")
 
     for key, obj in pairs(enemies) do
@@ -712,6 +783,110 @@ function Jinx.OnInterruptibleSpell(Source, SpellCast, Danger, EndTime, CanMoveDu
     end
 end
 
+function Jinx.OnTeleport(obj, name, duration_secs, status)
+
+
+
+
+    -- if MGet("ROnBackport") then
+
+    --     if not obj.IsEnemy or not Jinx.R:IsReady() then return false end
+
+    --     -- Don't ult when in melee range to another enemy
+    --     if MGet("RIsEnemyCloseSafetyCheck") then
+    --         for index, value in ipairs(ObjectManager.GetNearby("enemy", "heroes")) do
+    --             if Player:Distance(value) < 600 then
+    --                 return
+    --             end
+    --         end
+    --     end
+
+
+    --     local enemyLastSeen = nil
+    --     local hpregen = nil
+
+    --     for key, value in pairs(Enemies) do
+    --         if value.char == obj.CharName then
+    --             enemyLastSeen = value.lastSeenTime
+    --             hpregen = value.hpregen
+    --         end
+    --     end
+
+    --     -- Enemy Buffs
+    --     local buffs = obj.Buffs
+
+    --     -- Check for passives that we might not want to ult
+    --     for index, value in ipairs(buffs) do
+    --         if MGet("RBPAniviaCheck") then
+    --             if value.Name == "rebirthready" then return false end
+    --         end
+    --         if MGet("RBPZacCheck") then
+    --             if value.Name == "zacrebirthready" then return false end
+    --         end
+    --     end
+
+
+    --     -- Speed and time calculations
+    --     local distance = Player:EdgeDistance(obj.Position)
+    --     Jinx.R.Speed = distance > 1300 and (1300 * 1700 + ((distance - 1300) * 2200)) / distance or 1700
+    --     local totalTime = (Game.GetTime() - enemyLastSeen) + (distance / Jinx.R.Speed) + Jinx.R.Delay
+    --     local travelTime = (distance / Jinx.R.Speed) + Jinx.R.Delay
+
+    --     -- Collision checks
+    --     local windWallCollision = CollisionLib.SearchYasuoWall(Player.Position, obj.Position, Jinx.R.Radius * 2, Jinx.R.Speed, travelTime, 1, "enemy")
+    --     local collisionResult = CollisionLib.SearchHeroes(Player.Position, obj.Position, Jinx.R.Radius * 2, Jinx.R.Speed, travelTime, 1, "enemy", nil)
+
+
+    --     -- Termination Conditions
+    --     for key, value in pairs(collisionResult.Objects) do
+    --         if value.CharName ~= obj.CharName then
+    --             if debugging then WARN("WILL NOT ULT DUE TO COLLISION WITH " .. value.CharName) end
+    --             return false
+    --         end
+
+    --     end
+
+    --     if windWallCollision.Result == true then return false end
+    --     if travelTime > duration_secs then return false end
+    --     if status ~= "Started" then return false end
+    --     if MGet("RColTimeMax") < totalTime then return false end
+    --     if MGet("RBPAntiObvious") and #ObjectManager.GetNearby("enemy", "minions") > 0 and distance < 2500 then return false end
+
+    --     if debugging then
+    --         INFO('Colision in: ' .. (distance / Jinx.R.Speed) + Jinx.R.Delay)
+    --         INFO("Time between last seen and collision = " .. totalTime)
+    --         INFO("Likely HP Regenerated By Impact = " .. hpregen * totalTime)
+    --     end
+
+    --     if not MGet("RBP" .. obj.CharName) then
+    --         return true
+    --     end
+
+    --     if CanKill(obj, hpregen * totalTime) then
+
+
+    --         local alliesNearTarget = 0
+
+    --         for key, value in pairs(ObjectManager.Get("ally", "heroes")) do
+    --             if value:Distance(obj.Position) < 1500 then
+    --                 alliesNearTarget = alliesNearTarget + 1
+    --             end
+    --         end
+
+    --         if alliesNearTarget > 0 then
+    --             if MGet("RBPAllycheck") then
+    --                 return true
+    --             end
+    --         end
+
+    --         Input.Cast(SpellSlots.R, obj.Position)
+    --     end
+
+
+    -- end
+
+end
+
 local RBMenu = {}
 ---@return function
 function MGet(id)
@@ -729,63 +904,6 @@ function RBMenu.Divider(color, sym, am)
     end
 
     return Menu.ColoredText(string, DivColor, true)
-end
-
-function RBMenu.Description()
-    --[[
-  ____ _____ _____  __      _______ 
- |  _ \_   _/ ____| \ \    / /_   _|
- | |_) || || |  __   \ \  / /  | |  
- |  _ < | || | |_ |   \ \/ /   | |  
- | |_) || || |__| |    \  /   _| |_ 
- |____/_____\_____|     \/   |_____|
-                                    
-                                    
---]]
-    Menu.Text("  ____ _____ _____  __      _______ ", true)
-    Menu.Text(" |  _ \\_   _/ ____| \\ \\    / /_   _|", true)
-    Menu.Text(" | |_) || || |  __   \\ \\  / /  | |  ", true)
-    Menu.Text(" |  _ < | || | |_ |   \\ \\/ /   | |  ", true)
-    Menu.Text(" | |_) || || |__| |    \\  /   _| |_ ", true)
-    Menu.Text(" |____/_____\\_____|     \\/   |_____|", true)
-    Menu.Text("                                     ", true)
-
-    Menu.Text("")
-    Menu.ColoredText("Author:", 0xEFC347FF, true)
-    Menu.SameLine()
-    Menu.ColoredText("Roburppey", 0xD52CFFFF)
-    Menu.ColoredText("Version:", 0xEFC347FF, true)
-    Menu.SameLine()
-    Menu.ColoredText(ScriptVersion, 0xE3FFDF)
-    Menu.ColoredText("Last Updated:", 0xEFC347FF, true)
-    Menu.SameLine()
-    Menu.ColoredText(ScriptLastUpdate, 0xE3FFDF)
-    Menu.Text("")
-
-    Menu.ColoredText("Colorblind Settings:", 0xEFC347FF)
-    Menu.Button(
-        "Colorblind",
-        "Toggle Colorblind Mode",
-        function()
-            if Colorblind then
-                Colorblind = false
-            else
-                Colorblind = true
-            end
-        end
-    )
-    Menu.Text("")
-    Menu.NewTree(
-        "Changelog",
-        "Changelog",
-        function()
-
-            Menu.Text("1.0.1 - Menu Fixes")
-            Menu.Text("1.0.0 - Initial Release")
-        end
-    )
-    Menu.Separator()
-    Menu.Text("")
 end
 
 function RBMenu.Combo()
@@ -1027,6 +1145,7 @@ function Jinx.LoadMenu()
         Menu.Text("")
         Menu.Text("")
         Menu.NewTree("Changelog", "Changelog", function()
+            Menu.Text("1.3.5 - Q Performance Improvement")
             Menu.Text("1.3.3 - Fixed Bug Introduced With Last Update")
             Menu.Text("1.3.2 - Smoother Q Logic, More Customization")
             Menu.Text("1.3.1 - Improved performance of [E] on TP")
@@ -1094,9 +1213,11 @@ function Jinx.LoadMenu()
                 Menu.Text("")
 
                 Menu.Checkbox("R.Min.Preview", "Preview Min [R] Range", false)
+                Menu.Text("")
                 Menu.NextColumn()
                 Menu.NextColumn()
-                Menu.Checkbox("RMateCheck", "Don't ult an enemy if a team mate is right next to them", true)
+                Menu.Checkbox("RMateCheck", "Don't ult an enemy if an ally is right next to them", true)
+                Menu.Checkbox("RIsEnemyCloseSafetyCheck", "Don't use [R] if an enemy is really close to you", false)
                 Menu.Text("")
                 Menu.NewTree("RComboWhitelist", "[R] Whitelist", function()
                     for _, Object in pairs(ObjectManager.Get("enemy", "heroes")) do
@@ -1141,6 +1262,7 @@ function Jinx.LoadMenu()
             Menu.Checkbox("AutoEInterrupt", "Auto [E] on Interruptable Spells", true)
             Menu.Checkbox("EOnTp", "Auto [E] on minions that enemies are teleporting onto", true)
             Menu.Text("")
+
             Menu.Checkbox("RKS", "Auto [R] KS", true)
             Menu.NewTree("RKSWhitelist", "RKS Whitelist", function()
                 for _, Object in pairs(ObjectManager.Get("enemy", "heroes")) do
@@ -1148,6 +1270,21 @@ function Jinx.LoadMenu()
                     Menu.Checkbox("R" .. Name, "Use [R] for " .. Name, true)
                 end
             end)
+            -- Menu.NewTree("RBP", "[R] On Backport", function()
+            --     Menu.Checkbox("ROnBackport", "Auto [R] On Enemy Backport Location If Killable", true)
+            --     Menu.Checkbox("RBPAllycheck", "Do Not Cast [R] If An Ally Is Near The Target", true)
+            --     Menu.Checkbox("RBPAntiObvious", "Anti Obvious [R]", true)
+
+            --     Menu.Slider("RColTimeMax", "Max Time Between Last Seen And [R] Collision", 12, 5, 20, 1)
+
+            --     Menu.NewTree("RBPWhitelist", "R Snipe Whitelist", function()
+            --         for _, Object in pairs(ObjectManager.Get("enemy", "heroes")) do
+            --             local Name = Object.AsHero.CharName
+            --             Menu.Checkbox("RBP" .. Name, "Use [R] On Backport For " .. Name, true)
+            --         end
+            --     end)
+            -- end)
+
             Menu.Text("")
             Menu.Separator()
         end)
@@ -1231,7 +1368,10 @@ end
 function OnLoad()
     INFO("Welcome to BigJinx, enjoy your stay")
     Jinx.LoadMenu()
-
+    for _, Object in pairs(ObjectManager.Get("enemy", "heroes")) do
+        local Name = Object.AsHero.CharName
+        table.insert(Enemies, { char = Name, hpregen = 1, lastSeenTime = 0, lastSeenPos = nil })
+    end
     for EventName, EventId in pairs(Events) do
         if Jinx[EventName] then
             EventManager.RegisterCallback(EventId, Jinx[EventName])
