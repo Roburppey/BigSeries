@@ -28,12 +28,14 @@ local Game = CoreEx.Game
 local SpellSlots = Enums.SpellSlots
 local Events = Enums.Events
 local Player = ObjectManager.Player.AsHero
-local ScriptVersion = "1.0.0"
+local ScriptVersion = "0.5.0"
 local ScriptLastUpdate = "May 11. 2022"
 local champ = nil
 local Renderer = CoreEx.Renderer
 local ultTime = 0
 local ultEnemy = ""
+
+CoreEx.AutoUpdate("https://raw.githubusercontent.com/Roburppey/BigSeries/main/BackportSniper.lua", ScriptVersion)
 
 
 function checkChampions(list)
