@@ -80,7 +80,7 @@ Jinx.R = SpellLib.Skillshot({
     }
 })
 Ezreal.R = SpellLib.Skillshot({
-    Slot = Enums.SpellSlots.R,
+    Slot = SpellSlots.R,
     Delay = 1,
     Speed = 2000,
     Radius = 160,
