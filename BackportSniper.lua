@@ -28,8 +28,8 @@ local Game = CoreEx.Game
 local SpellSlots = Enums.SpellSlots
 local Events = Enums.Events
 local Player = ObjectManager.Player.AsHero
-local ScriptVersion = "0.5.0"
-local ScriptLastUpdate = "May 11. 2022"
+local ScriptVersion = "0.6.0"
+local ScriptLastUpdate = "July 21. 2022"
 local champ = nil
 local Renderer = CoreEx.Renderer
 local ultTime = 0
@@ -454,43 +454,16 @@ end
 
 function Sniper.LoadMenu()
     Menu.RegisterMenu("BPSniper", "Backport Sniper", function()
-        Menu.ColoredText("Author:", 0xEFC347FF, true)
-        Menu.SameLine()
-        Menu.ColoredText("Roburppey", 0xD52CFFFF)
-        Menu.ColoredText("Version:", 0xEFC347FF, true)
-        Menu.SameLine()
-        Menu.ColoredText(ScriptVersion, 0xE3FFDF)
-        Menu.ColoredText("Last Updated:", 0xEFC347FF, true)
-        Menu.SameLine()
-        Menu.ColoredText(ScriptLastUpdate, 0xE3FFDF)
-        Menu.Text("")
-        Menu.Text("")
-        Menu.Text(" ____  _____     _____ _   _ _____ _____  ______ _____  ", true)
-        Menu.Text("|  _ \\|  __ \\   / ____| \\ | |_   _|  __ \\|  ____|  __ \\ ", true)
-        Menu.Text("| |_) | |__) | | (___ |  \\| | | | | |__) | |__  | |__) |", true)
-        Menu.Text("|  _ <|  ___/   \\___ \\| . ` | | | |  ___/|  __| |  _  / ", true)
-        Menu.Text("| |_) | |       ____) | |\\  |_| |_| |    | |____| | \\ \\ ", true)
-        Menu.Text("|____/|_|      |_____/|_| \\_|_____|_|    |______|_|  \\_\\", true)
-        Menu.Text("")
-        Menu.Text("")
-
-
+        Menu.Separator("Backport Sniper")
         Menu.Keybind("ROnBackport", "Enable Backport Sniper", string.byte("Y"), true, true)
-        MenuDivider(0xFF901CFF, "-", nil)
-        SmartCheckbox("RBPAllycheck", "Don't cast if an ally is near the target")
-        SmartCheckbox("RIsEnemyCloseSafetyCheck", "Don't cast if an enemy is close to you", false)
-        SmartCheckbox("BadBuffCheck", "Don't cast if target has Anivia or Zac passive", false)
-        SmartCheckbox("RBPDelay", "Delay cast so it hits the enemy right before recall is finished")
-        SmartCheckbox("RBPAntiObvious", "Anti obvious")
-
-        MenuDivider(0xFF901CFF, "-", nil)
-        Menu.Text("")
-        Menu.ColoredText("Max time between last seen and spell collision", 0xEFC347FF)
-        Menu.Slider("RColTimeMax", " ", 12, 5, 20, 1)
-        Menu.Text("")
-        Menu.ColoredText("Account for extra HP", 0xEFC347FF)
-        Menu.Slider("SnipeBuffer", " ", 50, 0, 400, 10)
-        Menu.Text("")
+        Menu.Checkbox("RBPAllycheck", "Don't cast if an ally is near the target")
+        Menu.Checkbox("RIsEnemyCloseSafetyCheck", "Don't cast if an enemy is close to you", false)
+        Menu.Checkbox("BadBuffCheck", "Don't cast if target has Anivia or Zac passive", false)
+        Menu.Checkbox("RBPDelay", "Delay cast so it hits the enemy right before recall is finished")
+        Menu.Checkbox("RBPAntiObvious", "Anti obvious")
+	Menu.Separator("Made By Roburppey")
+        Menu.Slider("RColTimeMax", "Max time between last seen", 12, 5, 20, 1)
+        Menu.Slider("SnipeBuffer", "Account for extra HP", 50, 0, 400, 10)
         Menu.NewTree("RBPWhitelist", "Snipe Whitelist", function()
             for _, Object in pairs(ObjectManager.Get("enemy", "heroes")) do
                 local Name = Object.AsHero.CharName
