@@ -41,7 +41,7 @@ local HitChanceStrings = {
 }
 local lastETime = 0
 local Player = ObjectManager.Player.AsHero
-local ScriptVersion = "1.1.0"
+local ScriptVersion = "1.1.1"
 local ScriptLastUpdate = "10. April 2022"
 local Colorblind = false
 local isComboing = false
@@ -424,8 +424,7 @@ function Utils.ManaSlider(id, name, default)
 end
 
 function Utils.HitCountSlider(id, default, min, max)
-    Menu.Slider(id, "  ", default, min, max, 1)
-    Menu.ColoredText("Minimum Minions Hit", 0xE3FFDF)
+    Menu.Slider(id, "Minimum Minions Hit", default, min, max, 1)
 end
 
 function Utils.PassesMinimumMana(id)
@@ -1700,118 +1699,60 @@ function Brand.LoadMenu()
         "BigBrand",
         "BigBrand",
         function()
-            Menu.Text("")
-
-            Menu.ColoredText("Author:", 0xEFC347FF, true)
-            Menu.SameLine()
-            Menu.ColoredText("Roburppey", 0xD52CFFFF)
-            Menu.ColoredText("Version:", 0xEFC347FF, true)
-            Menu.SameLine()
-            Menu.ColoredText(ScriptVersion, 0xE3FFDF)
-            Menu.ColoredText("Last Updated:", 0xEFC347FF, true)
-            Menu.SameLine()
-            Menu.ColoredText(ScriptLastUpdate, 0xE3FFDF)
-            Menu.Text("")
-            Menu.ColoredText("Colorblind Settings:", 0xEFC347FF)
-            Menu.Button(
-                "Colorblind",
-                "Toggle Colorblind Mode",
-                function()
-                    if Colorblind then
-                        Colorblind = false
-                    else
-                        Colorblind = true
-                    end
-                end
-            )
-            Menu.Text("")
-            Menu.NewTree(
-                "Changelog",
-                "Changelog",
-                function()
-                    Menu.Text("1.1.0 - Cleared up Harass Menu and Logic")
-                    Menu.Text("1.0.5 - Added Additional Options To [R]")
-                end
-            )
-            Menu.Text("")
-            Menu.Separator()
-            Menu.Text("")
+	Menu.Separator("Big Brand")
             Menu.NewTree(
                 "BigHeroCombo",
                 "Combo",
                 function()
-                    Menu.Text("")
-                    Menu.ColoredText("Hold [T] For Q -> Flash -> E Burst Combo.", 0xEFC347FF, true)
-                    Menu.Text("")
+					Menu.Separator("Combo Settings")
+                    Menu.Separator("Hold [T] For Q -> Flash -> E Burst Combo", 0xEFC347FF, true)
                     Menu.ColumnLayout(
                         "DrawMenu",
                         "DrawMenu",
                         2,
                         true,
                         function()
-                            Menu.Separator()
-                            Menu.Checkbox("UseQ", "", true)
-                            Menu.SameLine()
-                            Menu.ColoredText("Cast [Q]", Utils.GetMenuColor("UseQ"))
-                            Menu.SameLine()
-
+                            Menu.Checkbox("UseQ", "Cast [Q]", true)
                             if Menu.Get("UseQ") then
-                                Utils.SmartCheckbox("ForceQ", "Only Q Ablaze Enemies")
-
+                                Menu.Checkbox("ForceQ", "Only Q Ablaze Enemies")
                                 if Menu.Get("ForceQ") then
-                                    Menu.Text("")
-                                    Menu.ColoredText("Ignore Ablaze Check If:", 0xEFC347FF)
-                                    Menu.Text("")
-                                    Utils.SmartCheckbox("IgnoreFQCD", "[E] and [W] Are On CD >")
+                                    Menu.Checkbox("IgnoreFQCD", "Ignore [E] and [W] Are On CD")
                                     Menu.SameLine()
-                                    Menu.Slider("IgnoreFQCDCount", " Seconds", 2, 1, 3, 1)
-                                    Utils.SmartCheckbox("IgnoreFQWK", "[Q] Can Kill")
+                                    Menu.Slider("IgnoreFQCDCount", "Seconds", 2, 1, 3, 1)
+                                    Menu.Checkbox("IgnoreFQWK", "[Q] Can Kill")
                                 end
                             end
 
                             Menu.NextColumn()
                             Menu.Slider("QHitChance", "HitChance %", 50, 1, 100, 1)
                             Menu.NextColumn()
-                            Menu.Separator()
-                            Menu.Checkbox("UseW", "", true)
+                            Menu.Checkbox("UseW", "Cast [W]", true)
                             Menu.SameLine()
-                            Menu.ColoredText("Cast [W]", Utils.GetMenuColor("UseW"))
                             Menu.NextColumn()
-                            Menu.Slider("WHitChance", "HitChance %", 75, 1, 100, 1)
+                            Menu.Slider("WHitChance", "HitChance %", 50, 1, 100, 1)
                             Menu.NextColumn()
-                            Menu.Separator()
 
-                            Menu.Checkbox("UseE", "", true)
+                            Menu.Checkbox("UseE", "Cast [E]", true)
                             Menu.SameLine()
-                            Menu.ColoredText("Cast [E]", Utils.GetMenuColor("UseE"))
                             Menu.NextColumn()
-                            Menu.NextColumn()
-                            Menu.Separator()
 
-                            Menu.Checkbox("UseR", "", true)
+                            Menu.Checkbox("UseR", "Cast [R]", true)
                             Menu.SameLine()
-                            Menu.ColoredText("Cast [R]", Utils.GetMenuColor("UseR"))
-                            Menu.Text("")
-                            Menu.Checkbox("RBounce", "", true)
+                            Menu.Checkbox("RBounce", "Only Cast [R] If It Can Bounce", true)
                             Menu.SameLine()
-                            Menu.ColoredText("Only Cast [R] If It Can Bounce", Utils.GetMenuColor("RBounce"))
-                            Utils.SmartCheckbox("BounceEngage", "Allow Casting [R] On Minion To Engage")
+                            Menu.Checkbox("BounceEngage", "Allow Casting [R] On Minion To Engage")
                             Menu.NextColumn()
 
                             if Menu.Get("BounceEngage") then
-                                Menu.Text("")
-
-                                Menu.ColoredText("Bounce Options: ", 0xE3FFDF)
                                 Menu.Dropdown(
                                     "ooga",
-                                    " ",
+                                    "Bounce Options",
                                     0,
                                     ({ "From Hero OR Minion -> Target", "From Hero -> Target" })
                                 )
                             end
                         end
                     )
-                    Menu.Text("")
                     Menu.NewTree(
                         "RWhitelist",
                         "R Whitelist",
@@ -1822,15 +1763,15 @@ function Brand.LoadMenu()
                                     Object.CharName,
                                     function()
                                         local Name = Object.AsHero.CharName
-                                        Utils.SmartCheckbox("R" .. Name, "Use [R]")
+                                        Menu.Checkbox("R" .. Name, "Use [R]")
 
                                         if Menu.Get("R" .. Name) then
-                                            Utils.HealthSlider(
+                                            Menu.Slider(
                                                 "R" .. Name .. "Health",
                                                 "Use [R] On " .. Name .. " When HP Below:",
                                                 100
                                             )
-                                            Utils.SmartCheckbox(
+                                            Menu.Checkbox(
                                                 "R" .. Name .. "Kill",
                                                 "Ignore Health Check If [R] Can Kill"
                                             )
@@ -1840,140 +1781,117 @@ function Brand.LoadMenu()
                             end
                         end
                     )
-                    Menu.Text("")
                 end
             )
-            Utils.MenuDivider(0xFF901CFF, "-", nil)
             Menu.NewTree(
                 "BigHeroHarass",
                 "Harass",
                 function()
-                    Menu.Text("")
                     Menu.ColumnLayout(
                         "DrawMenu2",
                         "DrawMenu2",
                         2,
                         true,
                         function()
-                            Utils.SmartCheckbox("UseQHarass", "Cast [Q]")
+							Menu.Separator("Harass Settings")
+                            Menu.Checkbox("UseQHarass", "Cast [Q]")
                             Menu.NextColumn()
                             Menu.Slider("QHitChanceHarass", "HitChance %", 45, 1, 100, 1)
                             Utils.ManaSlider("QHarassMana", "Min Mana", 50)
                             Menu.NextColumn()
-                            Menu.Text("")
-
-                            Utils.SmartCheckbox("UseEHarass", "Cast [E]")
-                            Menu.NextColumn()
-                            Menu.Text("")
-                            Menu.Slider("EHitChanceHarass", "HitChance %", 60, 1, 100, 1)
-                            Utils.ManaSlider("EHarassMana", "Min Mana", 50)
-                            Menu.Text("")
-                            Menu.NextColumn()
-                            Menu.Text("")
-                            Utils.SmartCheckbox("UseWHarass", "Cast [W]")
+                            Menu.Checkbox("UseWHarass", "Cast [W]")
                             Menu.NextColumn()
                             Menu.Slider("WHitChanceHarass", "HitChance %", 45, 1, 100, 1)
                             Utils.ManaSlider("WHarassMana", "Min Mana", 50)
                             Menu.NextColumn()
-                            Menu.Text("")
+                            Menu.Checkbox("UseEHarass", "Cast [E]")
+                            Menu.NextColumn()
+                            Menu.Slider("EHitChanceHarass", "HitChance %", 60, 1, 100, 1)
+                            Utils.ManaSlider("EHarassMana", "Min Mana", 50)
+                            Menu.NextColumn()
                         end
                     )
                 end
             )
-            Utils.MenuDivider(0xFF901CFF, "-", nil)
             Menu.NewTree(
                 "BigHeroWaveclear",
                 "Waveclear",
                 function()
-                    Menu.Text("")
                     Menu.ColumnLayout(
                         "DrawMenu223",
                         "DrawMenu223",
                         2,
                         true,
                         function()
-                            Utils.SmartCheckbox("UseQWaveclear", "Cast [Q]")
+							Menu.Separator("Wave Clear Settings")
+                            Menu.Checkbox("UseQWaveclear", "Cast [Q]")
                             Menu.NextColumn()
                             Utils.ManaSlider("QWaveclearMana", "Min Mana", 35)
                             Utils.HitCountSlider("QWaveclearHitcount", 3, 1, 6)
                             Menu.NextColumn()
-                            Menu.Text("")
-                            Utils.SmartCheckbox("UseWWaveclear", "Cast [W]")
+                            Menu.Checkbox("UseWWaveclear", "Cast [W]")
                             Menu.NextColumn()
-                            Menu.Text("")
                             Utils.ManaSlider("WWaveclearMana", "Min Mana", 35)
                             Utils.HitCountSlider("WWaveclearHitcount", 4, 1, 6)
                             Menu.NextColumn()
-                            Utils.SmartCheckbox("UseEWaveclear", "Cast [E]")
+                            Menu.Checkbox("UseEWaveclear", "Cast [E]")
                             Menu.NextColumn()
-                            Menu.Text("")
                             Utils.ManaSlider("EWaveclearMana", "Min Mana", 35)
                             Utils.HitCountSlider("EWaveclearHitcount", 4, 1, 6)
-
                             Menu.NextColumn()
                         end
                     )
                 end
             )
-            Utils.MenuDivider(0xFF901CFF, "-", nil)
             Menu.NewTree(
                 "Auto",
                 "Auto",
                 function()
-                    Menu.Text("")
                     Menu.ColumnLayout(
                         "DrawMenu233232323",
                         "DrawMenu23232323",
                         2,
                         true,
                         function()
-                            Utils.SmartCheckbox("AutoE", "Auto [E] Poke")
+							Menu.Separator("Auto Settings")
+                            Menu.Checkbox("AutoE", "Auto [E] Poke")
                             Menu.NextColumn()
                             Menu.Slider("EPokeMana", "Minimum Mana %", 45, 1, 100, 1)
                         end
                     )
-                    Menu.Separator()
                     Menu.ColumnLayout(
                         "DrawMenu23232323",
                         "DrawMenu232323",
                         2,
                         true,
                         function()
-                            Menu.Checkbox("Qkill", "", true)
+                            Menu.Checkbox("Qkill", "Automatically Cast [Q] To Kill", true)
                             Menu.SameLine()
-                            Menu.ColoredText("Automatically Cast [Q] To Kill", Utils.GetMenuColor("Qkill"))
                             Menu.NextColumn()
                             if Menu.Get("Qkill") then
-                                Menu.Checkbox("QKS", "", false)
+                                Menu.Checkbox("QKS", "Enable KS", false)
                                 Menu.SameLine()
-                                Menu.ColoredText("Enable KS", Utils.GetMenuColor("QKS"))
                             end
                             Menu.NextColumn()
-                            Menu.Checkbox("Wkill", "", true)
+                            Menu.Checkbox("Wkill", "Automatically Cast [W] To Kill", true)
                             Menu.SameLine()
-                            Menu.ColoredText("Automatically Cast [W] To Kill", Utils.GetMenuColor("Wkill"))
                             Menu.NextColumn()
                             if Menu.Get("Wkill") then
-                                Menu.Checkbox("WKS", "", false)
+                                Menu.Checkbox("WKS", "Enable KS", false)
                                 Menu.SameLine()
-                                Menu.ColoredText("Enable KS", Utils.GetMenuColor("WKS"))
                             end
                             Menu.NextColumn()
-                            Menu.Checkbox("Ekill", "", true)
+                            Menu.Checkbox("Ekill", "Automatically Cast [E] To Kill", true)
                             Menu.SameLine()
-                            Menu.ColoredText("Automatically Cast [E] To Kill", Utils.GetMenuColor("Ekill"))
                             Menu.NextColumn()
                             if Menu.Get("Ekill") then
-                                Menu.Checkbox("EKS", "", false)
+                                Menu.Checkbox("EKS", "Enable KS", false)
                                 Menu.SameLine()
-                                Menu.ColoredText("Enable KS", Utils.GetMenuColor("EKS"))
                             end
                         end
                     )
-                    Menu.Text("")
                 end
             )
-            Utils.MenuDivider(0xFF901CFF, "-", nil)
             Menu.NewTree(
                 "Drawings",
                 "Drawings",
@@ -1984,58 +1902,49 @@ function Brand.LoadMenu()
                         2,
                         true,
                         function()
-                            Menu.Text("")
-                            Menu.ColoredText("Range Drawings", 0xE3FFDF)
-                            Menu.Text("")
-                            Utils.SmartCheckbox("RangeDrawHide", "Hide Drawings Of Spells On CD")
-                            Menu.Text("")
-                            Menu.Checkbox("Drawings.Q", "", true)
+
+                            Menu.Separator("Range Drawings", 0xE3FFDF)
+
+                            Menu.Checkbox("RangeDrawHide", "Hide Drawings Of Spells On CD")
+
+                            Menu.Checkbox("Drawings.Q", "Draw [Q] Range", true)
                             Menu.SameLine()
-                            Menu.ColoredText("Draw [Q] Range", Utils.GetMenuColor("Drawings.Q"))
                             if Menu.Get("Drawings.Q") then
                                 Menu.ColorPicker("Drawings.Q.Color", "", 0xFF5BDFFF)
-                                Menu.Text("")
+    
                             end
-                            Menu.Checkbox("Drawings.W", "", true)
+                            Menu.Checkbox("Drawings.W", "Draw [W] Range", true)
                             Menu.SameLine()
-                            Menu.ColoredText("Draw [W] Range", Utils.GetMenuColor("Drawings.W"))
                             if Menu.Get("Drawings.W") then
                                 Menu.ColorPicker("Drawings.W.Color", "", 0xFF5BDFFF)
-                                Menu.Text("")
+    
                             end
-                            Menu.Checkbox("Drawings.E", "", true)
+                            Menu.Checkbox("Drawings.E", "Draw [E] Range", true)
                             Menu.SameLine()
-                            Menu.ColoredText("Draw [E] Range", Utils.GetMenuColor("Drawings.E"))
                             if Menu.Get("Drawings.E") then
                                 Menu.ColorPicker("Drawings.E.Color", "", 0xFF5BDFFF)
-                                Menu.Text("")
+    
                             end
-                            Menu.Checkbox("Drawings.R", "", true)
+                            Menu.Checkbox("Drawings.R", "Draw [R] Range", true)
                             Menu.SameLine()
-                            Menu.ColoredText("Draw [R] Range", Utils.GetMenuColor("Drawings.R"))
                             if Menu.Get("Drawings.R") then
                                 Menu.ColorPicker("Drawings.R.Color", "", 0xFF5BDFFF)
-                                Menu.Text("")
+    
                             end
-                            Menu.Text("")
+
                             Menu.NextColumn()
-                            Menu.Text("")
-                            Menu.ColoredText("Damage Drawings", 0xE3FFDF)
-                            Menu.Text("")
-                            Utils.SmartCheckbox("DmgDrawings.Q", "Draw [Q] Dmg")
-                            Utils.SmartCheckbox("DmgDrawings.W", "Draw [Q] Dmg")
-                            Utils.SmartCheckbox("DmgDrawings.E", "Draw [E] Dmg")
-                            Utils.SmartCheckbox("DmgDrawings.R", "Draw [R] Dmg")
+
+                            Menu.Checkbox("DmgDrawings.Q", "Draw [Q] Dmg")
+                            Menu.Checkbox("DmgDrawings.W", "Draw [W] Dmg")
+                            Menu.Checkbox("DmgDrawings.E", "Draw [E] Dmg")
+                            Menu.Checkbox("DmgDrawings.R", "Draw [R] Dmg")
                             Menu.SameLine()
                             Menu.Slider("RBounceDmgDraw", "Amount Of Bounces", 3, 1, 3, 1)
-                            Menu.Text("")
-                            Utils.SmartCheckbox("DmgDrawings.P", "Draw Passive Dmg")
-                            Utils.SmartCheckbox("DmgDrawings.P2", "Draw Passive Explosion Dmg")
-                            Menu.Text("")
+                            Menu.Checkbox("DmgDrawings.P", "Draw Passive Dmg")
+                            Menu.Checkbox("DmgDrawings.P2", "Draw Passive Explosion Dmg")
 
-                            Utils.SmartCheckbox("DmgDrawings.Ludens", "Draw [Ludens] Dmg")
+                            Menu.Checkbox("DmgDrawings.Ludens", "Draw [Ludens] Dmg")
 
-                            Menu.Text("")
                             Menu.NextColumn()
                         end
                     )
