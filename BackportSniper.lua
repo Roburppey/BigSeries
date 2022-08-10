@@ -28,8 +28,8 @@ local Game = CoreEx.Game
 local SpellSlots = Enums.SpellSlots
 local Events = Enums.Events
 local Player = ObjectManager.Player.AsHero
-local ScriptVersion = "0.6.0"
-local ScriptLastUpdate = "July 21. 2022"
+local ScriptVersion = "0.7.0"
+local ScriptLastUpdate = "August 10. 2022"
 local champ = nil
 local Renderer = CoreEx.Renderer
 local ultTime = 0
@@ -463,7 +463,7 @@ function Sniper.LoadMenu()
         Menu.Checkbox("RBPAntiObvious", "Anti obvious")
 	Menu.Separator("Made By Roburppey")
         Menu.Slider("RColTimeMax", "Max time between last seen", 12, 5, 20, 1)
-        Menu.Slider("SnipeBuffer", "Account for extra HP", 50, 0, 400, 10)
+        Menu.Slider("SnipeBuffer", "Account for extra HP", 0, 0, 400, 10)
         Menu.NewTree("RBPWhitelist", "Snipe Whitelist", function()
             for _, Object in pairs(ObjectManager.Get("enemy", "heroes")) do
                 local Name = Object.AsHero.CharName
