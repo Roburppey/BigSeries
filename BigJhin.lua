@@ -47,8 +47,8 @@ local qTimer = { nil, nil }
 local coneCtor = _G.CoreEx.Geometry.Cone
 local vecCtor = _G.CoreEx.Geometry.Vector
 local HitChanceEnum = Enums.HitChance
-local ScriptVersion = "1.2.0"
-local ScriptLastUpdate = "3. May 2022"
+local ScriptVersion = "1.2.1"
+local ScriptLastUpdate = "24. August 2022"
 local iTick = 0
 local JhinRLoc = nil
 
@@ -79,8 +79,8 @@ local UsableSS = {
 Jhin.Q = SpellLib.Targeted({
 
     Slot = SpellSlots.Q,
-    Range = 650,
-    Radius = 400,
+    Range = 550,
+    Radius = 450,
     Speed = math.huge,
     Delay = 0.25,
     Type = "Linear",
@@ -92,10 +92,10 @@ Jhin.Q = SpellLib.Targeted({
 Jhin.W = SpellLib.Skillshot({
 
     Slot = SpellSlots.W,
-    Range = 2450,
+    Range = 2500,
     Radius = 45,
-    Speed = 5000,
-    Delay = 0.25,
+    Speed = math.huge,
+    Delay = 0.75,
     Type = "Linear",
     Collisions = { Heroes = true, Windwall = true }
 
@@ -105,8 +105,8 @@ Jhin.E = SpellLib.Skillshot({
 
     Slot = SpellSlots.E,
     Range = 750,
-    Radius = 220,
-    Speed = 1000,
+    Radius = 160,
+    Speed = math.huge,
     Delay = 0.25,
     Type = "Circular",
     Collisions = { Windwall = true }
@@ -1374,7 +1374,7 @@ function Jhin.Logic.R(Target)
 
 
         if Player.IsFacing(Player, Target, 30) then
-            return Jhin.R:CastOnHitChance(Target, 0.6)
+            return Jhin.R:CastOnHitChance(Target, 0.50)
         end
 
 
@@ -1562,7 +1562,7 @@ function Jhin.Logic.E(Target)
         if Player.GetBuff(Player, "JhinPassiveReload") ~= nil or not Orbwalker.IsWindingUp() and not Orbwalker.IsAttackReady() then
 
 
-            return Jhin.E:CastOnHitChance(target, 0.6)
+            return Jhin.E:CastOnHitChance(target, 0.50)
 
         end
     end
@@ -2101,7 +2101,7 @@ function Jhin.Logic.Auto()
                             if hero and hero.IsTargetable and Utils.IsInRange(Player.Position, hero.Position, 0, Jhin.E.Range) then
 
                                 if not hero.CanMove or hero.IsSlowed or hero.IsTaunted or hero.IsGrounded then
-                                    return Jhin.E:CastOnHitChance(hero, 0.6)
+                                    return Jhin.E:CastOnHitChance(hero, 0.50)
                                 end
 
 
@@ -2128,7 +2128,7 @@ function Jhin.Logic.Auto()
 
                                 if IsMarked(hero) then
 
-                                    return Jhin.W:CastOnHitChance(hero, 0.6)
+                                    return Jhin.W:CastOnHitChance(hero, 0.50)
 
                                 end
                             end
@@ -2197,158 +2197,87 @@ end
 
 function Jhin.LoadMenu()
     Menu.RegisterMenu("BigJhin", "BigJhin", function()
-        Menu.Text("Author: Roburppey", true)
-        Menu.Text("Version: " .. ScriptVersion, true)
-        Menu.Text("Last Update: " .. ScriptLastUpdate, true)
+        Menu.NewTree("Drawings", "Drawing Settings", function()
+	Menu.Separator("Drawing Settings")
+            Menu.Checkbox("Drawings.Q", "Draw [Q] Range", true)
+            Menu.ColorPicker("Drawings.Q.Color", "Color", 0xEF476FFF)
+            Menu.Checkbox("Drawings.E", "Draw [E] Range", true)
+            Menu.ColorPicker("Drawings.E.Color", "Color", 0xEF476FFF)
+            Menu.Checkbox("Drawings.W", "Draw [W] Range", true)
+            Menu.ColorPicker("Drawings.W.Color", "Color", 0xEF476FFF)
+            Menu.Checkbox("Drawings.R", "Draw [R] Range", true)
+            Menu.ColorPicker("Drawings.R.Color", "Color", 0xEF476FFF)
+            Menu.Checkbox("Draw.ComboDamage", "Draw Combo Damage\nNext AA + Q + Galeforce", true)
+        end)
 
-        Menu.NewTree("BigHeroCombo", "Combo", function()
-
-            Menu.Text("")
+        Menu.NewTree("BigHeroCombo", "Combo Settings", function()
+	Menu.Separator("Combo Settings")
             Menu.Checkbox("Combo.Q.Use", "Cast [Q]", true)
             Menu.Checkbox("Combo.W.Use", "Cast [W]", true)
-            Menu.ColoredText("Hitchance:", 0xE3FFDF)
-            Menu.Slider("W.HitChance", "%", 60, 1, 100, 1)
+            Menu.Slider("W.HitChance", "HitChance %", 50, 1, 100, 1)
             Menu.Checkbox("Combo.E.Use", "Cast [E]", true)
             Menu.NextColumn()
-            Menu.Text("")
-            Menu.ColoredText("To ULT push [R] and then hold spacebar! ", 0xE3FFDF)
-            Menu.Text("")
-
-            Menu.ColoredText("[[ Semi Casts (Hitchance will be ignored) ]]", 0xD9EF47FF, true)
-            Menu.Text("")
-
-            Menu.Keybind("SemiR", "Semi [R] on closest target to mouse or forced target", string.byte("T"), false, false, false)
-            Menu.Keybind("SemiW", "Semi [W] on closest target to mouse or forced target", string.byte("Y"), false, false, false)
-
-            Menu.Text("")
+            Menu.ColoredText("To Ult Press [R] And Then Hold Spacebar!")
+            Menu.Keybind("SemiR", "Semi [R] On Closest Target To\nMouse Or Forced Target", string.byte("T"), false, false, false)
+            Menu.Keybind("SemiW", "Semi [W] On Closest Target To\nMouse Or Forced Target", string.byte("Y"), false, false, false)
         end)
 
-        Menu.NewTree("BigHeroHarass", "Harass [C]", function()
-
-            Menu.Text("")
+        Menu.NewTree("BigHeroHarass", "Harass Settings", function()
+	Menu.Separator("Harass Settings")
             Menu.Checkbox("Harass.Q.Use", "Cast [Q]", true)
-            Menu.Text("Minimum Percentage Mana to Cast [Q]")
-            Menu.Slider("Harass.Q.Mana", "%", 50, 0, 100, 5)
-
-            Menu.Text("")
-            Menu.Separator()
-            Menu.Text("")
-
+            Menu.Slider("Harass.Q.Mana", "Mana %", 50, 0, 100, 5)
             Menu.Checkbox("Harass.W.Use", "Cast [W]", true)
-            Menu.Text("Minimum Percentage Mana to Cast [W]")
-            Menu.Slider("Harass.W.Mana", "%", 50, 0, 100, 5)
-            Menu.ColoredText("[W] Hitchance", 0xE3FFDF)
-            Menu.Slider("Harass.W.HitChance", "%", 60, 1, 100, 1)
-            Menu.Text("")
+            Menu.Slider("Harass.W.Mana", "Mana %", 50, 0, 100, 5)
+            Menu.Slider("Harass.W.HitChance", "HitChance %", 50, 1, 100, 1)
+        end)
 
-            Menu.NewTree("HarassFarm", "Farming Options", function()
-
-                Menu.Text("")
+            Menu.NewTree("HarassFarm", "Farming Settings", function()
+	Menu.Separator("Farming Settings")
                 Menu.Checkbox("Harass.Q.Farm", "Cast [Q] To Secure Minion", true)
                 Menu.Checkbox("Harass.Q.Siege", "Cast Only On Cannon Minion", false)
-                Menu.Text("Do Not Cast If Mana Below Percent")
-                Menu.Slider("HFManaQ", "%", 30, 0, 100, 1)
-
-                Menu.Text("")
-                Menu.Separator()
-                Menu.Text("")
-
+                Menu.Slider("HFManaQ", "Mana %", 30, 0, 100, 1)
                 Menu.Checkbox("Harass.W.Farm", "Cast [W] To Secure Minion", true)
                 Menu.Checkbox("Harass.W.Siege", "Cast Only On Cannon Minion", true)
-                Menu.Text("Do Not Cast If Mana Below Percent")
-                Menu.Slider("HFManaW", "%", 30, 0, 100, 1)
-                Menu.Text("")
-
+                Menu.Slider("HFManaW", "Mana %", 30, 0, 100, 1)
             end)
-            Menu.Text("")
 
-        end)
-
-        Menu.NewTree("BigHeroLastHit", "LastHit Settings [X]", function()
-
-            Menu.Text("")
-            Menu.Checkbox("LastHit.Q.Use", "Cast [Q] To Secure Minion", true)
-            Menu.Checkbox("LastHit.Q.Siege", "Cast Only On Cannon Minion", false)
-            Menu.Text("Do Not Cast If Mana Below Percent")
-            Menu.Slider("LHManaQ", "%", 30, 0, 100, 1)
-
-            Menu.Text("")
-            Menu.Separator()
-            Menu.Text("")
-
-            Menu.Checkbox("LastHit.W.Use", "Cast [W] To Secure Minion", true)
-            Menu.Checkbox("LastHit.W.Siege", "Cast Only On Cannon Minion", true)
-            Menu.Text("Do Not Cast If Mana Below Percent")
-            Menu.Slider("LHManaW", "%", 30, 0, 100, 1)
-            Menu.Text("")
-
-
-        end)
-
-        Menu.NewTree("BigHeroWaveclear", "Waveclear Settings [V]", function()
-
-            Menu.Text("")
+        Menu.NewTree("BigHeroWaveclear", "WaveClear Settings", function()
+	Menu.Separator("WaveClear Settings")
             Menu.Checkbox("Waveclear.Q.Use", "Cast [Q] On Killable Minion", true)
-            Menu.Text("Do Not Cast If Mana Below Percent")
-            Menu.Slider("WCManaQ", "%", 30, 0, 100, 1)
-
-            Menu.Text("")
-            Menu.Separator()
-            Menu.Text("")
-
+            Menu.Slider("WCManaQ", "Mana %", 30, 0, 100, 1)
             Menu.Checkbox("Waveclear.W.Use", "Cast [W] To Waveclear", true)
             Menu.Slider("wclearhc", "Minions Hit", 3, 0, 6, 1)
-            Menu.Text("Do Not Cast If Mana Below Percent")
-            Menu.Slider("WCManaW", "%", 30, 0, 100, 1)
-
-            Menu.Text("")
-            Menu.Separator()
-            Menu.Text("")
-
+            Menu.Slider("WCManaW", "Mana %", 30, 0, 100, 1)
             Menu.Checkbox("Waveclear.E.Use", "Cast [E] To Waveclear", true)
             Menu.Checkbox("Keep.One.E", "Keep One [E] Charge", true)
             Menu.Slider("eclearhc", "Minions Hit", 3, 0, 6, 1)
-            Menu.Text("Do Not Cast If Mana Below Percent")
-            Menu.Slider("WCManaE", "%", 30, 0, 100, 1)
-            Menu.Text("")
+            Menu.Slider("WCManaE", "Mana %", 30, 0, 100, 1)
+        end)
 
-
+        Menu.NewTree("BigHeroLastHit", "LastHit Settings", function()
+	Menu.Separator("LastHit Settings")
+            Menu.Checkbox("LastHit.Q.Use", "Cast [Q] To Secure Minion", true)
+            Menu.Checkbox("LastHit.Q.Siege", "Cast Only On Cannon Minion", false)
+            Menu.Slider("LHManaQ", "Mana %", 30, 0, 100, 1)
+            Menu.Checkbox("LastHit.W.Use", "Cast [W] To Secure Minion", true)
+            Menu.Checkbox("LastHit.W.Siege", "Cast Only On Cannon Minion", true)
+            Menu.Slider("LHManaW", "Mana %", 30, 0, 100, 1)
         end)
 
         Menu.NewTree("Auto Settings", "Auto Settings", function()
-
-            Menu.Checkbox("Auto.W.Chain", "Auto [W] CC Chain", true)
-            Menu.Checkbox("Auto.E.Chain", "Auto [E] on CC", true)
+	Menu.Separator("Auto Settings")
             Menu.Checkbox("Auto.Galeforce.Use", "Cast Galeforce To Kill", true)
+            Menu.Checkbox("Auto.W.Chain", "Auto [W] CC Chain", true)
+            Menu.Checkbox("Auto.E.Chain", "Auto [E] On CC", true)
             Menu.Checkbox("Auto.Extend", "Use [E] To Extend Fourth Shot Timer", true)
-            Menu.Text("This will cast [E] when your fourth shot is about to reload")
-            Menu.Text("resetting the timer and giving you 2x or 3x as much time to shoot it")
-
-
+            Menu.Text("This Will Cast [E] When Your\nFourth Shot Is About To Reload")
+            Menu.Text("Resetting The Timer And Giving\nYou 2x Or 3x As Much Time To Shoot It")
         end)
-
-        Menu.NewTree("Drawings", "Drawings", function()
-
-
-            Menu.Checkbox("Drawings.Q", "Draw [Q] Range", true)
-            Menu.ColorPicker("Drawings.Q.Color", "", 0xEF476FFF)
-            Menu.Checkbox("Drawings.E", "Draw [E] Range", true)
-            Menu.ColorPicker("Drawings.E.Color", "", 0xEF476FFF)
-            Menu.Checkbox("Drawings.W", "Draw [W] Range", true)
-            Menu.ColorPicker("Drawings.W.Color", "", 0xEF476FFF)
-            Menu.Checkbox("Drawings.R", "Draw [R] Range", true)
-            Menu.ColorPicker("Drawings.R.Color", "", 0xEF476FFF)
-            Menu.Checkbox("Draw.ComboDamage", "Draw Combo Damage [Next AA + Q + Galeforce]", true)
-
-
-        end)
+	Menu.Separator("Author: roburppey")
     end)
 end
 
 function OnLoad()
-
-    INFO("Welcome to BigJhin, enjoy your stay")
-
     Jhin.LoadMenu()
     for EventName, EventId in pairs(Events) do
         if Jhin[EventName] then
