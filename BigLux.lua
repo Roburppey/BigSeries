@@ -37,8 +37,8 @@ local HitChance        = Enums.HitChance
 local HitChanceStrings = { "Collision", "OutOfRange", "VeryLow", "Low", "Medium", "High", "VeryHigh", "Dashing", "Immobile" };
 local lastETime        = 0
 local Player           = ObjectManager.Player.AsHero
-local ScriptVersion    = "1.2.7"
-local ScriptLastUpdate = "11. March 2022"
+local ScriptVersion    = "1.2.8"
+local ScriptLastUpdate = "24. August 2022"
 local iTick            = 0
 local luxE             = nil
 
@@ -93,7 +93,7 @@ Lux.E              = SpellLib.Skillshot({
 
     Slot       = Enums.SpellSlots.E,
     Range      = 1100,
-    Radius     = 300,
+    Radius     = 155,
     Delay      = 0.25,
     Speed      = 1200,
     Collisions = { WindWall = true },
@@ -598,7 +598,7 @@ function Lux.OnGapclose(source, dash, lagFree)
 
                     if not Hero.IsDead then
                         if Hero.IsEnemy then
-                            if Lux.E:CastOnHitChance(Hero, 0.60) then
+                            if Lux.E:CastOnHitChance(Hero, 0.50) then
                                 return true
                             end
 
@@ -690,7 +690,7 @@ function Lux.OnHeroImmobilized(Source, EndTime, IsStasis)
 
                         if Lux.Q:IsReady() then
 
-                            return Lux.Q:CastOnHitChance(Source, 0.35)
+                            return Lux.Q:CastOnHitChance(Source, 0.50)
 
                         end
 
@@ -703,7 +703,7 @@ function Lux.OnHeroImmobilized(Source, EndTime, IsStasis)
 
                         if Lux.E:IsReady() then
 
-                            if Lux.E:CastOnHitChance(Source, 0.65) then
+                            if Lux.E:CastOnHitChance(Source, 0.50) then
                                 return true
                             end
 
@@ -723,7 +723,7 @@ function Lux.OnHeroImmobilized(Source, EndTime, IsStasis)
                     if Source.Health - (damageCanDeal + GetUltDmg(Source) + Utils.GetLudensDmg(Source)) < 0 then
 
                         if Menu.Get("R" .. Source.AsHero.CharName) then
-                            return Lux.R:CastOnHitChance(Source, 0.40)
+                            return Lux.R:CastOnHitChance(Source, 0.50)
 
                         end
 
@@ -926,7 +926,7 @@ function Lux.Logic.Auto(lagFree)
                                 end
                             end
 
-                            return Lux.Q:CastOnHitChance(v, 0.5)
+                            return Lux.Q:CastOnHitChance(v, 0.50)
 
                         end
 
@@ -956,7 +956,7 @@ function Lux.Logic.Auto(lagFree)
 
                     if v.Health < GetEDmg(v) + Utils.GetLudensDmg() then
 
-                        if Lux.E:CastOnHitChance(v, 0.35) then
+                        if Lux.E:CastOnHitChance(v, 0.50) then
                             return true
                         end
 
@@ -1013,7 +1013,7 @@ function Lux.Logic.Auto(lagFree)
                     if rPred < GetUltDmg(v) + Utils.GetLudensDmg() and rPred > 0 then
 
                         if Menu.Get("R" .. v.CharName) then
-                            Lux.R:CastOnHitChance(v, 0.45)
+                            Lux.R:CastOnHitChance(v, 0.50)
 
                         end
 
@@ -1549,134 +1549,31 @@ end
 
 -- Load
 function Lux.LoadMenu()
-
     Menu.RegisterMenu("BigLux", "BigLux", function()
-        Menu.Text("Author: Roburppey", true)
-        Menu.Text("Version: " .. ScriptVersion, true)
-        Menu.Text("Last Update: " .. ScriptLastUpdate, true)
-
-        Menu.Checkbox("Support", "Support Mode", false)
-        Menu.Keybind("BaronKS", "Auto Steal Baron,Dragon,Buffs.. [HOLD]", string.byte("Y"), false, false, false)
-        Menu.Keybind("SemiR", "Semi [R] on closest target to mouse or forced target", string.byte("T"), false, false, false)
-        Menu.Text("Hold the Semi ult Key and Lux will ult when the hitchance is high enough")
-        Menu.Slider("SemiR.HitChance", "HitChance %", 55, 1, 100, 1)
-        Menu.Separator()
-
-        Menu.Text("")
-        Menu.NewTree("BigHeroCombo", "Combo", function()
-
-            Menu.Text("")
-
-            Menu.NewTree("QSettings", "[Q] Settings", function()
-                Menu.Checkbox("Combo.Q.Use", "Cast [Q]", true)
-                Menu.Slider("Combo.Q.HitChance", "HitChance %", 45, 1, 100, 1)
-                Menu.Slider("Combo.Q.MaxRange", "Max Range", Lux.Q.Range, 0, Lux.Q.Range, 10)
-
-
-            end)
-
-            Menu.NewTree("ESettings", "[E] Settings", function()
-                Menu.Checkbox("Combo.E.Use", "Cast [E]", true)
-                Menu.Slider("Combo.E.HitChance", "%", 35, 1, 100, 1)
-                Menu.Slider("Combo.E.MaxRange", "Max Range", Lux.E.Range, 0, Lux.E.Range, 10)
-
-
-            end)
-
-            Menu.NewTree("RSettings", "[R] Settings", function()
-                Menu.Checkbox("Combo.R.Use", "Cast [R]", true)
-                Menu.Checkbox("Combo.R.CheckHP", "Cast [R] only if it kills", true)
-                Menu.Slider("Combo.R.HitChance", "HitChance %", 55, 1, 100, 1)
-                Menu.Slider("Combo.R.MaxRange", "Max Range", Lux.R.Range, 0, Lux.R.Range, 10)
-                Menu.ColoredText("Recommended to reduce by 50 to prevent missed max range ults ", 0xE3FFDF)
-                Menu.NewTree("RComboWhitelist", "[R] Whitelist", function()
-                    for _, Object in pairs(ObjectManager.Get("enemy", "heroes")) do
-                        local Name = Object.AsHero.CharName
-                        Menu.Checkbox("RC" .. Name, "Use [R] for " .. Name, true)
-                    end
-                end)
-
-
-            end)
-
-            Menu.NextColumn()
-            Menu.Text("")
-
+        Menu.NewTree("Drawings", "Drawing Settings", function()
+        Menu.Separator("Drawing Settings")
+            Menu.Checkbox("Drawings.Q", "Draw [Q] Range", true)
+            Menu.ColorPicker("Drawings.Q.Color", "Color", 0xEF476FFF)
+            Menu.Checkbox("Drawings.E", "Draw [E] Range", true)
+            Menu.ColorPicker("Drawings.E.Color", "Color", 0xEF476FFF)
+            Menu.Checkbox("Drawings.W", "Draw [W] Range", true)
+            Menu.ColorPicker("Drawings.W.Color", "Color", 0xEF476FFF)
+            Menu.Checkbox("Drawings.R", "Draw [R] Range", true)
+            Menu.ColorPicker("Drawings.R.Color", "Color", 0xEF476FFF)
         end)
 
-        Menu.NewTree("Shielding", "Shield [W] Settings", function()
-
-            Menu.Checkbox("Ally.Shield.Targeted", "Shield targeted spells", true)
-            Menu.Checkbox("Ally.Shield.AA", "Shield basic attacks", true)
-            Menu.Checkbox("Ally.Shield.Skillshots", "Shield skillshots", true)
-            Menu.Checkbox("Ally.Shield.Ignite", "Shield Ignited ally", true)
-            Menu.Checkbox("Ally.Shield.pred", "Shield if predicted hp will be 0", true)
-
-
-        end)
-
-        Menu.NewTree("BigHeroHarass", "Harass [C]", function()
-
-            Menu.Text("")
-
-            Menu.NewTree("QHarass", "[Q] Settings", function()
-
-                Menu.Checkbox("Harass.Q.Use", "Cast [Q]", true)
-                Menu.Slider("Harass.Q.HitChance", "HitChance %", 55, 1, 100, 1)
-                Menu.Slider("Harass.Q.Mana", "Mana %", 50, 0, 100)
-                Menu.Slider("Harass.Q.MaxRange", "Max Range", Lux.Q.Range, 0, Lux.Q.Range, 10)
-
-
-            end)
-
-            Menu.NewTree("EHarass", "[E] Settings", function()
-
-                Menu.Checkbox("Harass.E.Use", "Cast [E]", true)
-                Menu.Slider("Harass.E.HitChance", "HitChance %", 35, 1, 100, 1)
-                Menu.Slider("Harass.E.Mana", "Mana %", 50, 0, 100)
-                Menu.Slider("Harass.E.MaxRange", "Max Range", Lux.E.Range, 0, Lux.E.Range, 10)
-
-
-            end)
-
-            Menu.NextColumn()
-            Menu.Text("")
-
-
-        end)
-
-        Menu.NewTree("BigHeroLastHit", "LastHit Settings [X]", function()
-
-            Menu.Checkbox("LastHit.E.Use", "Cast [E] to secure cannon when out of AA range", true)
-
-        end)
-
-        Menu.NewTree("BigHeroWaveclear", "Waveclear Settings [V]", function()
-
-
-            Menu.NewTree("Lane", "Laneclear Options", function()
-
-                Menu.Checkbox("Waveclear.Q.Use", "Use [Q]", true)
-                Menu.Checkbox("Waveclear.E.Use", "Use [E]", true)
-                Menu.Text("Minimum percent mana to use spells")
-                Menu.Slider("Lane.Mana", "Mana %", 50, 0, 100)
-                Menu.Text("Minimum amount of minions hit to cast [E]")
-                Menu.Slider("Lane.EH", "E Hitcount", 2, 1, 5)
-            end)
-            Menu.NewTree("Jungle", "Jungleclear Options", function()
-                Menu.Checkbox("Jungle.Q.Use", "Use [Q]", true)
-                Menu.Checkbox("Jungle.E.Use", "Use [E]", true)
-            end)
-
-
+        Menu.NewTree("DmgDrawings", "Damage Drawings", function()
+        Menu.Separator("Damage Drawings")
+            Menu.Checkbox("DmgDrawings.Q", "Draw [Q] Dmg", true)
+            Menu.Checkbox("DmgDrawings.E", "Draw [E] Dmg", true)
+            Menu.Checkbox("DmgDrawings.R", "Draw [R] Dmg", true)
+            Menu.Checkbox("DmgDrawings.Ludens", "Draw [Ludens] Dmg", true)
         end)
 
         Menu.NewTree("Auto Settings", "Auto Settings", function()
-
-
-            Menu.Checkbox("AutoQGap", "Auto [Q] on gapclose", true)
-            Menu.Checkbox("AutoEGap", "Auto [E] on gapclose", true)
-            Menu.Separator()
+        Menu.Separator("Auto Settings")
+            Menu.Checkbox("AutoQGap", "Auto [Q] On Gapclose", true)
+            Menu.Checkbox("AutoEGap", "Auto [E] On Gapclose", true)
             Menu.Checkbox("QKS", "Auto [Q] KS", true)
             Menu.Checkbox("EKS", "Auto [E] KS", true)
             Menu.Checkbox("RKS", "Auto [R] KS", true)
@@ -1686,61 +1583,103 @@ function Lux.LoadMenu()
                     Menu.Checkbox("R" .. Name, "Use [R] for " .. Name, true)
                 end
             end)
-            Menu.Separator()
-            Menu.Checkbox("AutoQ", "Auto [Q] if enemy is mid animation and hitchance => very high", true)
-            Menu.Checkbox("AutoE", "Auto [E] if enemy is mid animation and hitchance => very high", true)
+            Menu.Checkbox("AutoQ", "Auto [Q] If Enemy Is Mid Animation", true)
+            Menu.Checkbox("AutoE", "Auto [E] If Enemy Is Mid Animation", true)
             Menu.Slider("Auto.Poke.Mana", "Min Mana Percent", 30, 0, 100, 10)
-            Menu.Separator()
-            Menu.Checkbox("Auto.E.Harass", "Auto Cast [E] if can hit X champions", true)
+            Menu.Checkbox("Auto.E.Harass", "Auto Cast [E] If Can Hit X Champions", true)
             Menu.Slider("Auto.E.Slider", "Min Hitcount", 2, 1, 5, 1)
             Menu.Slider("Auto.E.Mana", "Min Mana Percent", 30, 0, 100, 10)
-
-
         end)
 
-        Menu.NewTree("Drawings", "Range Drawings", function()
-
-
-            Menu.Checkbox("Drawings.Q", "Draw [Q] Range", true)
-            Menu.ColorPicker("Drawings.Q.Color", "", 0xEF476FFF)
-            Menu.Checkbox("Drawings.E", "Draw [E] Range", true)
-            Menu.ColorPicker("Drawings.E.Color", "", 0xEF476FFF)
-            Menu.Checkbox("Drawings.W", "Draw [W] Range", true)
-            Menu.ColorPicker("Drawings.W.Color", "", 0xEF476FFF)
-            Menu.Checkbox("Drawings.R", "Draw [R] Range", true)
-            Menu.ColorPicker("Drawings.R.Color", "", 0xEF476FFF)
-
-
+        Menu.NewTree("Shielding", "AutoShield Settings", function()
+        Menu.Separator("AutoShield Settings")
+            Menu.Checkbox("Ally.Shield.Targeted", "Shield Targeted Spells", true)
+            Menu.Checkbox("Ally.Shield.AA", "Shield Basic Attacks", true)
+            Menu.Checkbox("Ally.Shield.Skillshots", "Shield Skillshots", true)
+            Menu.Checkbox("Ally.Shield.Ignite", "Shield Ignited Ally", true)
+            Menu.Checkbox("Ally.Shield.pred", "Shield If Predicted Hp Will Be 0", true)
         end)
 
-        Menu.NewTree("DmgDrawings", "Damage Drawings", function()
+        Menu.NewTree("BigHeroCombo", "Combo Settings", function()
+        Menu.Separator("Combo Settings")
+            Menu.NewTree("QSettings", "[Q] Settings", function()
+                Menu.Checkbox("Combo.Q.Use", "Cast [Q]", true)
+                Menu.Slider("Combo.Q.HitChance", "HitChance %", 35, 1, 100, 1)
+                Menu.Slider("Combo.Q.MaxRange", "Max Range", Lux.Q.Range, 0, Lux.Q.Range, 10)
+            end)
 
+            Menu.NewTree("ESettings", "[E] Settings", function()
+                Menu.Checkbox("Combo.E.Use", "Cast [E]", true)
+                Menu.Slider("Combo.E.HitChance", "HitChance %", 15, 1, 100, 1)
+                Menu.Slider("Combo.E.MaxRange", "Max Range", Lux.E.Range, 0, Lux.E.Range, 10)
+            end)
 
-            Menu.Checkbox("DmgDrawings.Q", "Draw [Q] Dmg", true)
-
-            Menu.Checkbox("DmgDrawings.E", "Draw [E] Dmg", true)
-
-            Menu.Checkbox("DmgDrawings.R", "Draw [R] Dmg", true)
-            Menu.Checkbox("DmgDrawings.Ludens", "Draw [Ludens] Dmg", true)
-
-
+            Menu.NewTree("RSettings", "[R] Settings", function()
+                Menu.Checkbox("Combo.R.Use", "Cast [R]", true)
+                Menu.Checkbox("Combo.R.CheckHP", "Cast [R] Only If It Kills", true)
+                Menu.Slider("Combo.R.HitChance", "HitChance %", 50, 1, 100, 1)
+                Menu.Slider("Combo.R.MaxRange", "Max Range", Lux.R.Range, 0, Lux.R.Range, 10)
+                Menu.NewTree("RComboWhitelist", "[R] Whitelist", function()
+                    for _, Object in pairs(ObjectManager.Get("enemy", "heroes")) do
+                        local Name = Object.AsHero.CharName
+                        Menu.Checkbox("RC" .. Name, "Use [R] for " .. Name, true)
+                    end
+                end)
+            end)
+            Menu.NextColumn()
         end)
 
+        Menu.NewTree("BigHeroHarass", "Harass Settings", function()
+        Menu.Separator("Harass Settings")
+            Menu.NewTree("QHarass", "[Q] Settings", function()
+                Menu.Checkbox("Harass.Q.Use", "Cast [Q]", true)
+                Menu.Slider("Harass.Q.HitChance", "HitChance %", 50, 1, 100, 1)
+                Menu.Slider("Harass.Q.Mana", "Mana %", 30, 0, 100)
+                Menu.Slider("Harass.Q.MaxRange", "Max Range", Lux.Q.Range, 0, Lux.Q.Range, 10)
+            end)
+
+            Menu.NewTree("EHarass", "[E] Settings", function()
+                Menu.Checkbox("Harass.E.Use", "Cast [E]", true)
+                Menu.Slider("Harass.E.HitChance", "HitChance %", 50, 1, 100, 1)
+                Menu.Slider("Harass.E.Mana", "Mana %", 30, 0, 100)
+                Menu.Slider("Harass.E.MaxRange", "Max Range", Lux.E.Range, 0, Lux.E.Range, 10)
+            end)
+
+            Menu.NextColumn()
+        end)
+
+        Menu.NewTree("BigHeroLastHit", "LastHit Settings", function()
+        Menu.Separator("LastHit Settings")
+            Menu.Checkbox("LastHit.E.Use", "Cast E To Secure Cannon\nWhen Out Of AA Range", true)
+        end)
+
+        Menu.NewTree("BigHeroWaveclear", "WaveClear Settings", function()
+        Menu.Separator("WaveClear Settings")
+            Menu.NewTree("Lane", "Laneclear Options", function()
+                Menu.Checkbox("Waveclear.Q.Use", "Use [Q]", true)
+                Menu.Checkbox("Waveclear.E.Use", "Use [E]", true)
+                Menu.Slider("Lane.Mana", "Minimum Percent Mana To Use Spells", 30, 0, 100)
+                Menu.Slider("Lane.EH", "E Minions Hitcount", 2, 1, 5)
+            end)
+            Menu.NewTree("Jungle", "JungleClear Settings", function()
+                Menu.Checkbox("Jungle.Q.Use", "Use [Q]", true)
+                Menu.Checkbox("Jungle.E.Use", "Use [E]", true)
+            end)
+        end)
+
+        Menu.Checkbox("Support", "Support Mode", false)
+        Menu.Keybind("BaronKS", "Auto Steal Baron Dragon Buffs HOLD", string.byte("Y"), false, false, false)
+        Menu.Keybind("SemiR", "Semi [R] On Closest Target To Mouse\nOr Forced Target", string.byte("T"), false, false, false)
+        Menu.Slider("SemiR.HitChance", "HitChance %", 50, 1, 100, 1)
+        Menu.Separator("Author: roburppey")
     end)
 end
 function OnLoad()
-
-    INFO("Big Lux Version " .. ScriptVersion .. " loaded.")
-    INFO("For Bugs and Requests Please Contact Roburppey")
-    INFO("Replies usually within 24 hours")
-
     Lux.LoadMenu()
     for EventName, EventId in pairs(Events) do
         if Lux[EventName] then
             EventManager.RegisterCallback(EventId, Lux[EventName])
         end
     end
-
     return true
-
 end
