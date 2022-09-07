@@ -41,7 +41,7 @@ local HitChanceStrings = {
 }
 local lastETime = 0
 local Player = ObjectManager.Player.AsHero
-local ScriptVersion = "1.1.1"
+local ScriptVersion = "1.1.2"
 local ScriptLastUpdate = "10. April 2022"
 local Colorblind = false
 local isComboing = false
@@ -1769,7 +1769,7 @@ function Brand.LoadMenu()
                                             Menu.Slider(
                                                 "R" .. Name .. "Health",
                                                 "Use [R] On " .. Name .. " When HP Below:",
-                                                100
+                                                100, 1, 100, 1
                                             )
                                             Menu.Checkbox(
                                                 "R" .. Name .. "Kill",
