@@ -28,7 +28,7 @@ local Game = CoreEx.Game
 local SpellSlots = Enums.SpellSlots
 local Events = Enums.Events
 local Player = ObjectManager.Player.AsHero
-local ScriptVersion = "0.7.0"
+local ScriptVersion = "0.8.0"
 local ScriptLastUpdate = "August 10. 2022"
 local champ = nil
 local Renderer = CoreEx.Renderer
@@ -54,7 +54,7 @@ function checkChampions(list)
 end
 
 function MGet(string)
-    return Menu.Get(string)
+    return Menu.Get(string, true)
 end
 
 if not checkChampions({ "Jinx", "Ezreal" }) then return false end
